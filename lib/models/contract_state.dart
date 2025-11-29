@@ -5,6 +5,25 @@ part 'contract_state.g.dart';
 
 enum UserRole { seller, buyer }
 
+enum MessageType { text, contract, image, ai }
+
+@freezed
+class NegotiationMessage with _$NegotiationMessage {
+  const factory NegotiationMessage({
+    required String id,
+    required MessageType type,
+    required String text,
+    UserRole? senderRole,
+    String? senderName,
+    @Default([]) List<String> attachments,
+    DateTime? timestamp,
+    Map<String, dynamic>? aiAnalysis,
+  }) = _NegotiationMessage;
+
+  factory NegotiationMessage.fromJson(Map<String, dynamic> json) =>
+      _$NegotiationMessageFromJson(json);
+}
+
 enum NegotiationStatus {
   idle,
   awaitingPeerResponse,
@@ -45,6 +64,9 @@ class ContractState with _$ContractState {
 
     // Draft history for tracking changes
     @Default([]) List<ContractDraft> draftHistory,
+
+    // Chat messages (negotiation conversation)
+    @Default([]) List<NegotiationMessage> messages,
 
     // Private input field (not yet submitted)
     @Default('') String myPrivateInput,

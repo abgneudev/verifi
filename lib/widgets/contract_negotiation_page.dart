@@ -217,6 +217,73 @@ class _ContractNegotiationPageState
                   const SizedBox(height: 20),
                 ],
 
+                // Chat-style message list
+                if (contractState.messages.isNotEmpty) ...[
+                  Text(
+                    'Conversation',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 300,
+                    child: ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: contractState.messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = contractState.messages[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: _MessageBubble(
+                            message: msg,
+                            myRole: contractState.myRole,
+                            onApplySuggestion: (price) {
+                              ref.read(contractStateProvider.notifier).applyAISuggestion(price);
+                            },
+                            onAskVendor: (prompt) async {
+                              // Let buyer either prefill or send the question to vendor
+                              final choice = await showDialog<String?>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Ask vendor'),
+                                  content: Text('Do you want to prefill this question or send it now?\n\n"' + prompt + '"'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop('cancel'),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop('prefill'),
+                                      child: const Text('Prefill'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop('send'),
+                                      child: const Text('Send'),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (choice == 'prefill') {
+                                _privateInputController.text = 'Question to vendor: ' + prompt;
+                                setState(() {});
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Prefilled question. Edit or press Send.')),
+                                );
+                              } else if (choice == 'send') {
+                                // Send immediately as a private input (buyer asking vendor)
+                                await ref.read(contractStateProvider.notifier).submitResponse(prompt);
+                                _privateInputController.clear();
+                                setState(() {});
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Private input section (only visible when it's user's turn)
                 GlassCard(
                   margin: EdgeInsets.zero,
@@ -446,6 +513,129 @@ class _ContractNegotiationPageState
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  final NegotiationMessage message;
+  final UserRole? myRole;
+  final void Function(num price)? onApplySuggestion;
+  final void Function(String prompt)? onAskVendor;
+
+  const _MessageBubble({
+    required this.message,
+    required this.myRole,
+    this.onApplySuggestion,
+    this.onAskVendor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // If this is an AI (moderator) message and the current user is not a buyer,
+    // hide it entirely so only buyers see moderator suggestions.
+    if (message.type == MessageType.ai && myRole != UserRole.buyer) {
+      return const SizedBox.shrink();
+    }
+    final isMe = message.senderRole != null && message.senderRole == myRole;
+    final color = isMe
+        ? VerifiTheme.neonMint.withOpacity(0.2)
+        : VerifiTheme.signalOrange.withOpacity(0.2);
+    final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+
+    return Column(
+      crossAxisAlignment: alignment,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                (message.senderRole == UserRole.seller) ? "SELLER" : ((message.senderRole == UserRole.buyer) ? "BUYER" : (message.senderName ?? 'PARTY')),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: isMe ? VerifiTheme.neonMint : VerifiTheme.signalOrange,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                message.text,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              if (message.type == MessageType.ai && message.aiAnalysis != null) ...[
+                const SizedBox(height: 8),
+                // Render follow-up questions (actionable) if the AI provided them
+                if (message.aiAnalysis != null && message.aiAnalysis!['followUpQuestions'] != null) ...[
+                  const SizedBox(height: 6),
+                  ...((message.aiAnalysis!['followUpQuestions'] as List<dynamic>).map((q) {
+                    final prompt = q.toString();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: ElevatedButton(
+                        onPressed: onAskVendor != null ? () => onAskVendor!(prompt) : null,
+                        child: Text('Ask vendor: ' + (prompt.length > 60 ? prompt.substring(0, 60) + '...' : prompt)),
+                      ),
+                    );
+                  }).toList()),
+                ],
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          final suggested = message.aiAnalysis?['suggestedPrice'];
+                          if (suggested != null && onApplySuggestion != null) {
+                            // Ask for confirmation before applying
+                            final apply = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Apply AI suggestion'),
+                                content: Text('Apply suggested price: \$${(suggested as num).toStringAsFixed(2)}?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text('Apply'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (apply == true) {
+                              onApplySuggestion!(suggested as num);
+                            }
+                          }
+                        } catch (_) {}
+                      },
+                      child: const Text('Apply suggestion'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {},
+                      child: const Text('Discuss'),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          message.timestamp != null ? message.timestamp!.toIso8601String() : '',
+           style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                 color: VerifiTheme.ghostGrey,
+               ),
+         ),
+      ],
     );
   }
 }

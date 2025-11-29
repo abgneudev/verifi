@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../design_system.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/app_providers.dart';
 
-class BalanceCard extends StatelessWidget {
-  final double statementBalance;
-
-  const BalanceCard({super.key, this.statementBalance = 1538.1});
+class BalanceCard extends ConsumerWidget {
+  const BalanceCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wallet = ref.watch(walletStateProvider);
+    final statementBalance = wallet.myBalance;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
       height: 200,

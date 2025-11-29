@@ -109,7 +109,7 @@ Remember: Your goal is RAPID CONVERGENCE to a fair agreement, not perfect repres
         ? 'This is the initial draft.'
         : 'Previous versions:\n${previousVersions.asMap().entries.map((e) => 'V${e.key + 1}: ${e.value}').join('\n')}';
 
-    return '''NEGOTIATION ROUND ${draftVersion}
+    return '''NEGOTIATION ROUND $draftVersion
 
 CURRENT CONTRACT DRAFT (Version $draftVersion):
 """
@@ -124,7 +124,7 @@ $userResponse
 CONTEXT:
 $historyContext
 
-TASK: Analyze the ${respondingRole}'s response and create a revised contract that:
+TASK: Analyze the $respondingRole's response and create a revised contract that:
 1. Incorporates their valid concerns
 2. Preserves the other party's key interests
 3. Adds protective clauses for both sides
@@ -213,26 +213,8 @@ Respond ONLY with the JSON format specified in your system prompt.''';
     const jsonInstruction =
         'Respond ONLY with JSON exactly in this shape: {"approved": true|false, "reason": "brief text", "confidence": 0.0-1.0}. Example: {"approved": true, "reason":"Clear photo of a sealed 500ml branded water bottle","confidence":0.95}';
 
-    if (effectiveImagePath != null && textProof != null && textProof.isNotEmpty) {
-      // Both image and text provided
-      userPrompt =
-          "Analyze this image and the following text description to determine if they match the contract requirement: '$contractText'.\n\nText description: '$textProof'\n\n$jsonInstruction";
-      images = [effectiveImagePath];
-    } else if (effectiveImagePath != null) {
-      // Only image provided
-      userPrompt =
-          "Analyze this image and determine if it matches the contract requirement: '$contractText'.\n\n$jsonInstruction";
-      images = [effectiveImagePath];
-    } else if (textProof != null && textProof.isNotEmpty) {
-      // Only text provided
-      userPrompt =
-          "Analyze this text description to determine if it matches the contract requirement: '$contractText'.\n\nText description: '$textProof'\n\n$jsonInstruction";
-      images = null;
-    } else {
-      throw Exception('Either image or text proof must be provided');
-    }
-
-    final messages = [
+    // Base system message used for text-only requests
+    final baseSystemMessages = [
       ChatMessage(
         role: "system",
         content:
@@ -240,55 +222,298 @@ Respond ONLY with the JSON format specified in your system prompt.''';
       ),
     ];
 
-    // Add user message with or without images based on what's available
-    if (images != null) {
-      messages.add(
-        ChatMessage(role: "user", content: userPrompt, images: images),
-      );
-    } else {
-      messages.add(ChatMessage(role: "user", content: userPrompt));
+    // Read bytes of effective image for cropping/ocr
+    Uint8List? originalBytes;
+    if (effectiveImagePath != null) {
+      originalBytes = await File(effectiveImagePath).readAsBytes();
     }
 
-    // Use explicit params for deterministic vision judgement
+    // Optional OCR-like text extraction using the vision model (avoid adding new native OCR deps)
+    String? extractedText;
+    if (originalBytes != null) {
+      try {
+        final ocrMessages = [
+          ChatMessage(role: 'system', content: 'You are an image OCR assistant. Extract any readable text from the provided image and return ONLY the JSON {"text": "..."}.'),
+          ChatMessage(role: 'user', content: 'Extract visible text from the image and respond with JSON. Do not add any commentary.'),
+        ];
+        final ocrResp = await _cactus!.generateCompletion(messages: ocrMessages, params: CactusCompletionParams(model: 'lfm2-vl-450m', maxTokens: 200, temperature: 0.0));
+        final ocrParsed = _tryParseJsonFromString(ocrResp.response);
+        if (ocrParsed != null && ocrParsed['text'] is String) {
+          extractedText = ocrParsed['text'] as String;
+        } else {
+          // fallback: use raw response as text
+          extractedText = ocrResp.response;
+        }
+      } catch (e) {
+        print('OCR extraction failed: $e');
+      }
+    }
+
+    // Generate crops (full + center + small center + top + bottom) to form an ensemble
+    List<Uint8List> crops = [];
+    if (originalBytes != null) {
+      try {
+        final cropList = await compute(_generateCropsStatic, {'bytes': originalBytes, 'max': maxDimension});
+        crops = List<Uint8List>.from(cropList);
+      } catch (e) {
+        print('Crop generation failed: $e');
+        crops = [originalBytes];
+      }
+    }
+
+    // Pre-check: run an object-detection style prompt on crops to ensure expected object (e.g., "bottle") is present.
+    if (crops.isNotEmpty) {
+      bool foundExpected = false;
+      for (final cropBytes in crops) {
+        try {
+          final tmp = await _writeBytesToTempFile(cropBytes, extension: '.jpg');
+          final detectMessages = [
+            ChatMessage(
+              role: 'system',
+              content:
+                  'You are a strict image object detector. Given an image, return ONLY JSON in the form {"objects": [{"name":"...","confidence":0.0}]}. Do not add commentary.',
+            ),
+            ChatMessage(
+              role: 'user',
+              content: 'List all visible objects in the image and their confidence (0-1) as JSON.',
+              images: [tmp.path],
+            ),
+          ];
+
+          final detectParams = CactusCompletionParams(model: 'lfm2-vl-450m', maxTokens: 150, temperature: 0.0, topP: 0.0);
+          final detectResp = await _cactus!.generateCompletion(messages: detectMessages, params: detectParams).timeout(const Duration(seconds: 30));
+          final detParsed = _tryParseJsonFromString(detectResp.response);
+          if (detParsed != null && detParsed['objects'] is List) {
+            for (final o in detParsed['objects']) {
+              try {
+                final name = (o['name'] ?? '').toString().toLowerCase();
+                final conf = (o['confidence'] is num) ? (o['confidence'] as num).toDouble() : 0.0;
+                if (name.contains('bottle') && conf >= 0.5) {
+                  foundExpected = true;
+                  break;
+                }
+              } catch (_) {}
+            }
+          }
+        } catch (e) {
+          // ignore and continue with other crops
+          print('Object detection failed on crop: $e');
+        }
+        if (foundExpected) break;
+      }
+
+      if (!foundExpected) {
+        // No bottle detected in any crop — return a clear rejection so UI can surface it immediately
+        final fallback = {
+          'approved': false,
+          'reason': 'No water bottle detected in provided image evidence. Please upload a clear photo of the product (water bottle).',
+          'confidence': 0.0,
+        };
+        return jsonEncode(fallback);
+      }
+    }
+
+    // If no crops available and there is textProof, proceed with text-only path
+    if (crops.isEmpty && (textProof != null && textProof.isNotEmpty)) {
+      userPrompt = "Analyze this text description to determine if it matches the contract requirement: '$contractText'.\n\nText description: '$textProof'\n\n$jsonInstruction";
+      images = null;
+      final messagesSingle = List<ChatMessage>.from(baseSystemMessages)
+        ..add(ChatMessage(role: 'user', content: userPrompt));
+      final paramsSingle = CactusCompletionParams(model: 'lfm2-vl-450m', maxTokens: 300, temperature: 0.0, topP: 0.0);
+      CactusCompletionResult responseSingle;
+      try {
+        responseSingle = await _cactus!.generateCompletion(messages: messagesSingle, params: paramsSingle).timeout(const Duration(seconds: 60));
+      } catch (e) {
+        print('Text-only analysis failed: $e');
+        final err = {'approved': false, 'reason': 'AI analysis failed: ${e.toString()}', 'confidence': 0.0};
+        return jsonEncode(err);
+      }
+      final rawSingle = responseSingle.response;
+      final parsedSingle = _tryParseJsonFromString(rawSingle);
+      if (parsedSingle != null) return jsonEncode(parsedSingle);
+      return rawSingle;
+    }
+
+    // For image-based ensemble, run analysis on each crop and aggregate
+    final results = <Map<String, dynamic>>[];
+    final debugRaw = <String>[];
+    var idx = 0;
+    for (final cropBytes in crops) {
+      idx++;
+      // write crop to temp file
+      final tmpFile = await _writeBytesToTempFile(cropBytes, extension: '.jpg');
+      final cropPath = tmpFile.path;
+
+      // Build prompt for this crop, include OCR text if available and textProof
+      final sb = StringBuffer();
+      sb.writeln("Analyze this image crop (index $idx) and determine if it matches the contract requirement: '$contractText'.");
+      if (extractedText != null && extractedText.trim().isNotEmpty) {
+        sb.writeln('\nDetected text from image (OCR):');
+        sb.writeln('"""');
+        sb.writeln(extractedText);
+        sb.writeln('"""');
+      }
+      if (textProof != null && textProof.isNotEmpty) {
+        sb.writeln('\nText proof provided:');
+        sb.writeln('"""');
+        sb.writeln(textProof);
+        sb.writeln('"""');
+      }
+      sb.writeln('\n$jsonInstruction');
+
+      final cropMessages = [
+        ChatMessage(role: 'system', content: 'You are an expert visual contract verifier. Answer only with the specified JSON.'),
+        ChatMessage(role: 'user', content: sb.toString(), images: [cropPath]),
+      ];
+
+      final paramsCrop = CactusCompletionParams(model: 'lfm2-vl-450m', maxTokens: 300, temperature: 0.0, topP: 0.0);
+      CactusCompletionResult cropResp;
+      try {
+        cropResp = await _cactus!.generateCompletion(messages: cropMessages, params: paramsCrop).timeout(const Duration(seconds: 60));
+      } catch (e) {
+        print('Crop analysis failed for idx $idx: $e');
+        debugRaw.add('ERROR: $e');
+        results.add({'approved': false, 'confidence': 0.0, 'reason': 'analysis error'});
+        continue;
+      }
+
+      final cropRaw = cropResp.response;
+      debugRaw.add(cropRaw);
+      final parsed = _tryParseJsonFromString(cropRaw);
+      if (parsed != null) {
+        final approved = parsed['approved'] == true;
+        final confidence = (parsed['confidence'] is num) ? (parsed['confidence'] as num).toDouble() : (approved ? 0.75 : 0.25);
+        final reason = parsed['reason']?.toString() ?? '';
+        results.add({'approved': approved, 'confidence': confidence, 'reason': reason});
+      } else {
+        // Fallback to keyword heuristics
+        final approved = isApproved(cropRaw);
+        results.add({'approved': approved, 'confidence': approved ? 0.6 : 0.2, 'reason': cropRaw});
+      }
+    }
+
+    // Aggregate results
+    final voteCount = results.length;
+    final votesFor = results.where((r) => r['approved'] == true).length;
+    final avgConfidence = results.map((r) => r['confidence'] as double).fold(0.0, (a, b) => a + b) / (voteCount == 0 ? 1 : voteCount);
+    final approvedFinal = votesFor > (voteCount / 2);
+    final reasons = results.map((r) => r['reason']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+
+    final aggregated = {
+      'approved': approvedFinal,
+      'confidence': double.parse(avgConfidence.toStringAsFixed(2)),
+      'votes': results,
+      'votesFor': votesFor,
+      'voteCount': voteCount,
+      'reasons': reasons,
+      'ocrText': extractedText ?? '',
+      'debug': debugRaw,
+    };
+
+    return jsonEncode(aggregated);
+  }
+
+  /// Assess pricing and return structured JSON with fields:
+  /// { isAnomalous: bool, marketPrice: number|null, proposedPrice: number, marginPercent: number, suggestedPrice: number|null, confidence: 0-1, reasons: [string] }
+  Future<Map<String, dynamic>?> assessPricing({required String contractText}) async {
+    if (!_isReady || _cactus == null) {
+      print('Pricing assessment requested but Cactus AI not ready: isReady=$_isReady');
+      return null;
+    }
+
+    // Short system prompt and clear JSON schema
+    final system = ChatMessage(
+      role: 'system',
+      content:
+          'You are a pricing analysis assistant. Given a contract text describing an item and price, determine if the proposed price is anomalous compared to typical market value. Return ONLY a JSON object matching the schema: {"type":"pricing_assessment","isAnomalous":true|false,"marketPrice":number|null,"proposedPrice":number,"marginPercent":number,"suggestedPrice":number|null,"confidence":0.0-1.0,"reasons":["..."]}.' ,
+    );
+
+    final user = ChatMessage(
+      role: 'user',
+      content:
+          'Analyze this contract text and respond with the JSON schema exactly. Contract:\n"""\n$contractText\n"""',
+    );
+
     final params = CactusCompletionParams(
       model: 'lfm2-vl-450m',
       maxTokens: 300,
       temperature: 0.0,
+      topP: 0.0,
     );
 
-    CactusCompletionResult response;
     try {
-      // Add a timeout to avoid indefinite blocking; catching errors prevents crashes
-      response = await _cactus!.generateCompletion(
-        messages: messages,
-        params: params,
-      ).timeout(const Duration(seconds: 60));
+      print('Pricing assessment: sending request to model...');
+      final res = await _cactus!
+          .generateCompletion(messages: [system, user], params: params)
+          .timeout(const Duration(seconds: 60));
+
+      print('Pricing assessment raw response: ${res.response}');
+
+      final parsed = _tryParseJsonFromString(res.response);
+      if (parsed != null && parsed['type'] == 'pricing_assessment') {
+        print('Pricing assessment parsed JSON OK: $parsed');
+        return Map<String, dynamic>.from(parsed);
+      }
+
+      // If model didn't return valid JSON, log and fall back to heuristic
+      print('Pricing assessment: model returned unparsable output, falling back to heuristic');
     } catch (e, st) {
-      // Log error and return structured error JSON so app UI can handle it gracefully
-      print('Cactus analyzeProof error: $e\n$st');
-      final err = {
-        'approved': false,
-        'reason': 'AI analysis failed: ${e.toString()}',
-        'confidence': 0.0,
-      };
-      return jsonEncode(err);
+      print('Pricing assessment failed: $e\n$st');
     }
 
-    // Log useful debugging info for failures (will appear in device logs)
+    // Fallback heuristic: extract numeric price and create a conservative assessment
     try {
-      print('Cactus analyzeProof success=${response.success} tokens=${response.totalTokens}');
-    } catch (_) {}
+      final priceRegexes = [
+        RegExp(r"USD\s*([0-9]{1,7}(?:\.[0-9]{1,2})?)", caseSensitive: false),
+        RegExp(r"\$([0-9]{1,7}(?:\.[0-9]{1,2})?)"),
+        RegExp(r"([0-9]{1,7}(?:\.[0-9]{1,2})?)\s*USD", caseSensitive: false),
+        RegExp(r"([0-9]{1,7}(?:\.[0-9]{1,2})?)\s*(?:dollars|usd|us\$)", caseSensitive: false),
+        RegExp(r"\b([0-9]{1,7}(?:\.[0-9]{1,2})?)\b"),
+      ];
+      double? proposed;
+      for (final r in priceRegexes) {
+        final m = r.firstMatch(contractText);
+        if (m != null) {
+          final group = m.group(1) ?? m.group(0);
+          if (group != null) {
+            final cleaned = group.replaceAll(RegExp(r'[^0-9.]'), '');
+            proposed = double.tryParse(cleaned);
+            if (proposed != null) break;
+          }
+        }
+      }
 
-    final raw = response.response;
+      if (proposed == null) {
+        print('Pricing heuristic: no numeric price found in text');
+        return null;
+      }
 
-    // Try to extract JSON from the model output and return a normalized JSON string
-    final parsed = _tryParseJsonFromString(raw);
-    if (parsed != null) {
-      return jsonEncode(parsed);
+      // Simple market estimate: assume marketPrice ~= proposed * 0.9 (conservative)
+      final marketEstimate = (proposed * 0.9);
+      final marginPercent = ((proposed - marketEstimate) / (marketEstimate == 0 ? 1 : marketEstimate)) * 100;
+      final suggestedPrice = double.parse((marketEstimate).toStringAsFixed(2));
+      final isAnomalous = marginPercent.abs() >= 20.0; // flag if >20% deviation
+
+      final fallback = {
+        'type': 'pricing_assessment',
+        'isAnomalous': isAnomalous,
+        'marketPrice': double.parse(marketEstimate.toStringAsFixed(2)),
+        'proposedPrice': double.parse(proposed.toStringAsFixed(2)),
+        'marginPercent': double.parse(marginPercent.toStringAsFixed(1)),
+        'suggestedPrice': suggestedPrice,
+        'confidence': 0.45, // conservative confidence for heuristic
+        'reasons': [
+          'Fallback heuristic: extracted numeric price from text',
+          'Conservative market estimate = 90% of proposed price',
+        ],
+      };
+
+      print('Pricing heuristic result: $fallback');
+      return fallback;
+    } catch (e, st) {
+      print('Pricing heuristic failed: $e\n$st');
+      return null;
     }
-
-    // If parsing fails, return the raw response so caller can inspect it
-    return raw;
   }
 
   // Helper to write bytes to a temporary file and return the File
@@ -440,5 +665,61 @@ Respond ONLY with the JSON format specified in your system prompt.''';
     } catch (e) {
       return null;
     }
+  }
+}
+
+// Top-level helper to generate multiple crops in background
+List<Uint8List> _generateCropsStatic(Map args) {
+  final bytes = args['bytes'] as Uint8List;
+  final max = args['max'] as int;
+  try {
+    final image = img.decodeImage(bytes);
+    if (image == null) return [bytes];
+
+    // Resize large image to max dimension first while preserving aspect
+    final width = image.width;
+    final height = image.height;
+    img.Image base = image;
+    if (width > max || height > max) {
+      final scale = max / (width > height ? width : height);
+      final newW = (width * scale).round();
+      final newH = (height * scale).round();
+      base = img.copyResize(image, width: newW, height: newH, interpolation: img.Interpolation.cubic);
+    }
+
+    final crops = <Uint8List>[];
+    // Full image
+    crops.add(Uint8List.fromList(img.encodeJpg(base, quality: 85)));
+
+    final w = base.width;
+    final h = base.height;
+
+    // Center crop 60%
+    final cW1 = (w * 0.6).round();
+    final cH1 = (h * 0.6).round();
+    final x1 = ((w - cW1) / 2).round();
+    final y1 = ((h - cH1) / 2).round();
+    final center60 = img.copyCrop(base, x: x1, y: y1, width: cW1, height: cH1);
+    crops.add(Uint8List.fromList(img.encodeJpg(center60, quality: 85)));
+
+    // Center crop 30%
+    final cW2 = (w * 0.3).round();
+    final cH2 = (h * 0.3).round();
+    final x2 = ((w - cW2) / 2).round();
+    final y2 = ((h - cH2) / 2).round();
+    final center30 = img.copyCrop(base, x: x2, y: y2, width: cW2, height: cH2);
+    crops.add(Uint8List.fromList(img.encodeJpg(center30, quality: 85)));
+
+    // Top half
+    final top = img.copyCrop(base, x: 0, y: 0, width: w, height: (h / 2).round());
+    crops.add(Uint8List.fromList(img.encodeJpg(top, quality: 85)));
+
+    // Bottom half
+    final bottom = img.copyCrop(base, x: 0, y: (h / 2).round(), width: w, height: h - (h / 2).round());
+    crops.add(Uint8List.fromList(img.encodeJpg(bottom, quality: 85)));
+
+    return crops;
+  } catch (e) {
+    return [bytes];
   }
 }

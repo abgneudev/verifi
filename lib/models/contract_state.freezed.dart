@@ -15,6 +15,348 @@ final _privateConstructorUsedError = UnsupportedError(
   'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
 );
 
+NegotiationMessage _$NegotiationMessageFromJson(Map<String, dynamic> json) {
+  return _NegotiationMessage.fromJson(json);
+}
+
+/// @nodoc
+mixin _$NegotiationMessage {
+  String get id => throw _privateConstructorUsedError;
+  MessageType get type => throw _privateConstructorUsedError;
+  String get text => throw _privateConstructorUsedError;
+  UserRole? get senderRole => throw _privateConstructorUsedError;
+  String? get senderName => throw _privateConstructorUsedError;
+  List<String> get attachments =>
+      throw _privateConstructorUsedError; // file paths or urls
+  DateTime? get timestamp => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get aiAnalysis => throw _privateConstructorUsedError;
+
+  /// Serializes this NegotiationMessage to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of NegotiationMessage
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $NegotiationMessageCopyWith<NegotiationMessage> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $NegotiationMessageCopyWith<$Res> {
+  factory $NegotiationMessageCopyWith(
+    NegotiationMessage value,
+    $Res Function(NegotiationMessage) then,
+  ) = _$NegotiationMessageCopyWithImpl<$Res, NegotiationMessage>;
+  @useResult
+  $Res call({
+    String id,
+    MessageType type,
+    String text,
+    UserRole? senderRole,
+    String? senderName,
+    List<String> attachments,
+    DateTime? timestamp,
+    Map<String, dynamic>? aiAnalysis,
+  });
+}
+
+/// @nodoc
+class _$NegotiationMessageCopyWithImpl<$Res, $Val extends NegotiationMessage>
+    implements $NegotiationMessageCopyWith<$Res> {
+  _$NegotiationMessageCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of NegotiationMessage
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? type = null,
+    Object? text = null,
+    Object? senderRole = freezed,
+    Object? senderName = freezed,
+    Object? attachments = null,
+    Object? timestamp = freezed,
+    Object? aiAnalysis = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            type: null == type
+                ? _value.type
+                : type // ignore: cast_nullable_to_non_nullable
+                      as MessageType,
+            text: null == text
+                ? _value.text
+                : text // ignore: cast_nullable_to_non_nullable
+                      as String,
+            senderRole: freezed == senderRole
+                ? _value.senderRole
+                : senderRole // ignore: cast_nullable_to_non_nullable
+                      as UserRole?,
+            senderName: freezed == senderName
+                ? _value.senderName
+                : senderName // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            attachments: null == attachments
+                ? _value.attachments
+                : attachments // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            timestamp: freezed == timestamp
+                ? _value.timestamp
+                : timestamp // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            aiAnalysis: freezed == aiAnalysis
+                ? _value.aiAnalysis
+                : aiAnalysis // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$NegotiationMessageImplCopyWith<$Res>
+    implements $NegotiationMessageCopyWith<$Res> {
+  factory _$$NegotiationMessageImplCopyWith(
+    _$NegotiationMessageImpl value,
+    $Res Function(_$NegotiationMessageImpl) then,
+  ) = __$$NegotiationMessageImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    String id,
+    MessageType type,
+    String text,
+    UserRole? senderRole,
+    String? senderName,
+    List<String> attachments,
+    DateTime? timestamp,
+    Map<String, dynamic>? aiAnalysis,
+  });
+}
+
+/// @nodoc
+class __$$NegotiationMessageImplCopyWithImpl<$Res>
+    extends _$NegotiationMessageCopyWithImpl<$Res, _$NegotiationMessageImpl>
+    implements _$$NegotiationMessageImplCopyWith<$Res> {
+  __$$NegotiationMessageImplCopyWithImpl(
+    _$NegotiationMessageImpl _value,
+    $Res Function(_$NegotiationMessageImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of NegotiationMessage
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? type = null,
+    Object? text = null,
+    Object? senderRole = freezed,
+    Object? senderName = freezed,
+    Object? attachments = null,
+    Object? timestamp = freezed,
+    Object? aiAnalysis = freezed,
+  }) {
+    return _then(
+      _$NegotiationMessageImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                  as MessageType,
+        text: null == text
+            ? _value.text
+            : text // ignore: cast_nullable_to_non_nullable
+                  as String,
+        senderRole: freezed == senderRole
+            ? _value.senderRole
+            : senderRole // ignore: cast_nullable_to_non_nullable
+                  as UserRole?,
+        senderName: freezed == senderName
+            ? _value.senderName
+            : senderName // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        attachments: null == attachments
+            ? _value._attachments
+            : attachments // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        timestamp: freezed == timestamp
+            ? _value.timestamp
+            : timestamp // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        aiAnalysis: freezed == aiAnalysis
+            ? _value._aiAnalysis
+            : aiAnalysis // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$NegotiationMessageImpl implements _NegotiationMessage {
+  const _$NegotiationMessageImpl({
+    required this.id,
+    required this.type,
+    required this.text,
+    this.senderRole,
+    this.senderName,
+    final List<String> attachments = const [],
+    this.timestamp,
+    final Map<String, dynamic>? aiAnalysis,
+  }) : _attachments = attachments,
+       _aiAnalysis = aiAnalysis;
+
+  factory _$NegotiationMessageImpl.fromJson(Map<String, dynamic> json) =>
+      _$$NegotiationMessageImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final MessageType type;
+  @override
+  final String text;
+  @override
+  final UserRole? senderRole;
+  @override
+  final String? senderName;
+  final List<String> _attachments;
+  @override
+  @JsonKey()
+  List<String> get attachments {
+    if (_attachments is EqualUnmodifiableListView) return _attachments;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_attachments);
+  }
+
+  // file paths or urls
+  @override
+  final DateTime? timestamp;
+  final Map<String, dynamic>? _aiAnalysis;
+  @override
+  Map<String, dynamic>? get aiAnalysis {
+    final value = _aiAnalysis;
+    if (value == null) return null;
+    if (_aiAnalysis is EqualUnmodifiableMapView) return _aiAnalysis;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  @override
+  String toString() {
+    return 'NegotiationMessage(id: $id, type: $type, text: $text, senderRole: $senderRole, senderName: $senderName, attachments: $attachments, timestamp: $timestamp, aiAnalysis: $aiAnalysis)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$NegotiationMessageImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.text, text) || other.text == text) &&
+            (identical(other.senderRole, senderRole) ||
+                other.senderRole == senderRole) &&
+            (identical(other.senderName, senderName) ||
+                other.senderName == senderName) &&
+            const DeepCollectionEquality().equals(
+              other._attachments,
+              _attachments,
+            ) &&
+            (identical(other.timestamp, timestamp) ||
+                other.timestamp == timestamp) &&
+            const DeepCollectionEquality().equals(
+              other._aiAnalysis,
+              _aiAnalysis,
+            ));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    type,
+    text,
+    senderRole,
+    senderName,
+    const DeepCollectionEquality().hash(_attachments),
+    timestamp,
+    const DeepCollectionEquality().hash(_aiAnalysis),
+  );
+
+  /// Create a copy of NegotiationMessage
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$NegotiationMessageImplCopyWith<_$NegotiationMessageImpl> get copyWith =>
+      __$$NegotiationMessageImplCopyWithImpl<_$NegotiationMessageImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$NegotiationMessageImplToJson(this);
+  }
+}
+
+abstract class _NegotiationMessage implements NegotiationMessage {
+  const factory _NegotiationMessage({
+    required final String id,
+    required final MessageType type,
+    required final String text,
+    final UserRole? senderRole,
+    final String? senderName,
+    final List<String> attachments,
+    final DateTime? timestamp,
+    final Map<String, dynamic>? aiAnalysis,
+  }) = _$NegotiationMessageImpl;
+
+  factory _NegotiationMessage.fromJson(Map<String, dynamic> json) =
+      _$NegotiationMessageImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  MessageType get type;
+  @override
+  String get text;
+  @override
+  UserRole? get senderRole;
+  @override
+  String? get senderName;
+  @override
+  List<String> get attachments; // file paths or urls
+  @override
+  DateTime? get timestamp;
+  @override
+  Map<String, dynamic>? get aiAnalysis;
+
+  /// Create a copy of NegotiationMessage
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$NegotiationMessageImplCopyWith<_$NegotiationMessageImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 ContractDraft _$ContractDraftFromJson(Map<String, dynamic> json) {
   return _ContractDraft.fromJson(json);
 }
@@ -280,6 +622,8 @@ mixin _$ContractState {
   ContractDraft? get currentDraft =>
       throw _privateConstructorUsedError; // Draft history for tracking changes
   List<ContractDraft> get draftHistory =>
+      throw _privateConstructorUsedError; // Chat-style message list for negotiation
+  List<NegotiationMessage> get messages =>
       throw _privateConstructorUsedError; // Private input field (not yet submitted)
   String get myPrivateInput =>
       throw _privateConstructorUsedError; // Whose turn it is to respond
@@ -325,6 +669,7 @@ abstract class $ContractStateCopyWith<$Res> {
     UserRole? myRole,
     ContractDraft? currentDraft,
     List<ContractDraft> draftHistory,
+    List<NegotiationMessage> messages,
     String myPrivateInput,
     NegotiationStatus status,
     String? aiMediation,
@@ -365,6 +710,7 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
     Object? myRole = freezed,
     Object? currentDraft = freezed,
     Object? draftHistory = null,
+    Object? messages = null,
     Object? myPrivateInput = null,
     Object? status = null,
     Object? aiMediation = freezed,
@@ -397,6 +743,10 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
                 ? _value.draftHistory
                 : draftHistory // ignore: cast_nullable_to_non_nullable
                       as List<ContractDraft>,
+            messages: null == messages
+                ? _value.messages
+                : messages // ignore: cast_nullable_to_non_nullable
+                      as List<NegotiationMessage>,
             myPrivateInput: null == myPrivateInput
                 ? _value.myPrivateInput
                 : myPrivateInput // ignore: cast_nullable_to_non_nullable
@@ -498,6 +848,7 @@ abstract class _$$ContractStateImplCopyWith<$Res>
     UserRole? myRole,
     ContractDraft? currentDraft,
     List<ContractDraft> draftHistory,
+    List<NegotiationMessage> messages,
     String myPrivateInput,
     NegotiationStatus status,
     String? aiMediation,
@@ -538,6 +889,7 @@ class __$$ContractStateImplCopyWithImpl<$Res>
     Object? myRole = freezed,
     Object? currentDraft = freezed,
     Object? draftHistory = null,
+    Object? messages = null,
     Object? myPrivateInput = null,
     Object? status = null,
     Object? aiMediation = freezed,
@@ -570,6 +922,10 @@ class __$$ContractStateImplCopyWithImpl<$Res>
             ? _value._draftHistory
             : draftHistory // ignore: cast_nullable_to_non_nullable
                   as List<ContractDraft>,
+        messages: null == messages
+            ? _value._messages
+            : messages // ignore: cast_nullable_to_non_nullable
+                  as List<NegotiationMessage>,
         myPrivateInput: null == myPrivateInput
             ? _value.myPrivateInput
             : myPrivateInput // ignore: cast_nullable_to_non_nullable
@@ -650,6 +1006,7 @@ class _$ContractStateImpl implements _ContractState {
     this.myRole,
     this.currentDraft,
     final List<ContractDraft> draftHistory = const [],
+    final List<NegotiationMessage> messages = const [],
     this.myPrivateInput = '',
     this.status = NegotiationStatus.idle,
     this.aiMediation,
@@ -667,7 +1024,8 @@ class _$ContractStateImpl implements _ContractState {
     this.aiApprovedProof = false,
     this.proofSubmittedAt,
     this.buyerApprovedDelivery = false,
-  }) : _draftHistory = draftHistory;
+  }) : _draftHistory = draftHistory,
+       _messages = messages;
 
   factory _$ContractStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$ContractStateImplFromJson(json);
@@ -687,6 +1045,17 @@ class _$ContractStateImpl implements _ContractState {
     if (_draftHistory is EqualUnmodifiableListView) return _draftHistory;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_draftHistory);
+  }
+
+  // Chat-style message list for negotiation
+  final List<NegotiationMessage> _messages;
+  // Chat-style message list for negotiation
+  @override
+  @JsonKey()
+  List<NegotiationMessage> get messages {
+    if (_messages is EqualUnmodifiableListView) return _messages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_messages);
   }
 
   // Private input field (not yet submitted)
@@ -743,7 +1112,7 @@ class _$ContractStateImpl implements _ContractState {
 
   @override
   String toString() {
-    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash, currentStep: $currentStep, escrowDeposited: $escrowDeposited, deliveryConfirmed: $deliveryConfirmed, proofSubmitted: $proofSubmitted, proofText: $proofText, proofImagePath: $proofImagePath, aiProofAnalysis: $aiProofAnalysis, aiApprovedProof: $aiApprovedProof, proofSubmittedAt: $proofSubmittedAt, buyerApprovedDelivery: $buyerApprovedDelivery)';
+    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, messages: $messages, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash, currentStep: $currentStep, escrowDeposited: $escrowDeposited, deliveryConfirmed: $deliveryConfirmed, proofSubmitted: $proofSubmitted, proofText: $proofText, proofImagePath: $proofImagePath, aiProofAnalysis: $aiProofAnalysis, aiApprovedProof: $aiApprovedProof, proofSubmittedAt: $proofSubmittedAt, buyerApprovedDelivery: $buyerApprovedDelivery)';
   }
 
   @override
@@ -758,6 +1127,7 @@ class _$ContractStateImpl implements _ContractState {
               other._draftHistory,
               _draftHistory,
             ) &&
+            const DeepCollectionEquality().equals(other._messages, _messages) &&
             (identical(other.myPrivateInput, myPrivateInput) ||
                 other.myPrivateInput == myPrivateInput) &&
             (identical(other.status, status) || other.status == status) &&
@@ -800,6 +1170,7 @@ class _$ContractStateImpl implements _ContractState {
     myRole,
     currentDraft,
     const DeepCollectionEquality().hash(_draftHistory),
+    const DeepCollectionEquality().hash(_messages),
     myPrivateInput,
     status,
     aiMediation,
@@ -838,6 +1209,7 @@ abstract class _ContractState implements ContractState {
     final UserRole? myRole,
     final ContractDraft? currentDraft,
     final List<ContractDraft> draftHistory,
+    final List<NegotiationMessage> messages,
     final String myPrivateInput,
     final NegotiationStatus status,
     final String? aiMediation,
@@ -866,7 +1238,9 @@ abstract class _ContractState implements ContractState {
   @override
   ContractDraft? get currentDraft; // Draft history for tracking changes
   @override
-  List<ContractDraft> get draftHistory; // Private input field (not yet submitted)
+  List<ContractDraft> get draftHistory; // Chat-style message list for negotiation
+  @override
+  List<NegotiationMessage> get messages; // Private input field (not yet submitted)
   @override
   String get myPrivateInput; // Whose turn it is to respond
   @override

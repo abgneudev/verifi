@@ -45,6 +45,8 @@ final aiConsensusStateProvider =
       (ref) => AIConsensusStateNotifier(ref),
     );
 
+final walletStateProvider = StateNotifierProvider<WalletStateNotifier, WalletState>((ref) => WalletStateNotifier());
+
 // Connection State Notifier
 class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
   ConnectionStateNotifier(this.ref) : super(conn.initialConnectionState) {
@@ -372,6 +374,19 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
         status: NegotiationStatus.awaitingPeerResponse,
       );
 
+      // Append chat message representing this draft
+      final msg = NegotiationMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        type: MessageType.contract,
+        text: initialDraft.text,
+        senderRole: state.myRole,
+        senderName: null,
+        attachments: [],
+        timestamp: DateTime.now(),
+        aiAnalysis: null,
+      );
+      state = state.copyWith(messages: [...state.messages, msg]);
+
       // Send to peer
       ref.read(connectionStateProvider.notifier).sendMessage({
         "type": "DRAFT_PROPOSAL",
@@ -509,6 +524,94 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
       status: NegotiationStatus.awaitingMyResponse,
       aiMediation: aiSuggestion,
     );
+
+    // Append chat message for this incoming draft
+    final incomingMsg = NegotiationMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: MessageType.contract,
+      text: text,
+      senderRole: role,
+      senderName: null,
+      attachments: [],
+      timestamp: DateTime.now(),
+      aiAnalysis: null,
+    );
+    state = state.copyWith(messages: [...state.messages, incomingMsg]);
+
+    // Run AI pricing assessment in background and insert AI moderation message
+    final cactus = ref.read(cactusAIServiceProvider);
+    if (cactus.isReady) {
+      cactus.assessPricing(contractText: text).then((assessment) {
+        if (assessment != null) {
+          // Build follow-up questions to help buyer/seller collect missing info
+          final List<String> followUps = [];
+
+          // If AI indicates more info is required, convert missing fields into user-facing prompts
+          if (assessment['needs_more_info'] == true) {
+            final missing = assessment['missing_fields'] as List<dynamic>?;
+            if (missing != null && missing.isNotEmpty) {
+              for (var f in missing) {
+                final key = f.toString().toLowerCase();
+                if (key.contains('weight') || key == 'weight') {
+                  followUps.add('Provide weight (e.g., 5 kg) or count (e.g., 10 apples).');
+                } else if (key.contains('variety') || key == 'variety') {
+                  followUps.add('Specify variety (e.g., Granny Smith, Fuji).');
+                } else if (key.contains('label') || key == 'label') {
+                  followUps.add('Upload a photo that clearly shows the product label/packaging.');
+                } else if (key.contains('size') || key == 'size') {
+                  followUps.add('Indicate size or dimensions (e.g., 500 ml, 1 L).');
+                } else if (key.contains('condition') || key == 'condition') {
+                  followUps.add('Describe condition/grade (e.g., Grade A, bruised, like-new).');
+                } else {
+                  followUps.add('Provide $f.');
+                }
+              }
+            } else {
+              followUps.add('Please provide clear images, weight/size, and label/variety information.');
+            }
+          }
+
+          // Add prompts when AI confidence is low
+          final confidence = (assessment['confidence'] is num) ? (assessment['confidence'] as num).toDouble() : null;
+          if (confidence == null || confidence < 0.7) {
+            followUps.add('Add clearer photos (top/side/scale) and explicit weight/size to increase AI confidence.');
+          }
+
+          // Category-specific guidance inferred from contract text
+          final lc = text.toLowerCase();
+          if (lc.contains('apple') || lc.contains('apples')) {
+            followUps.add('For apples: specify variety, weight or count, and condition (grade).');
+          } else if (lc.contains('bottle')) {
+            followUps.add('For bottles: specify capacity (e.g., 500 ml), unopened vs opened, and show label/brand.');
+          }
+
+          // Compose message text including follow-up action suggestions
+          final summaryText = (assessment['isAnomalous'] == true)
+              ? 'AI: Pricing looks anomalous. Suggested: \$${assessment['suggestedPrice']} (confidence ${assessment['confidence']}).'
+              : 'AI: Pricing appears reasonable (confidence ${assessment['confidence']}).';
+
+          final followText = followUps.isNotEmpty
+              ? '\nSuggested follow-up questions:\n' + followUps.map((q) => '- $q').join('\n')
+              : '';
+
+          final analysis = Map<String, dynamic>.from(assessment);
+          analysis['followUpQuestions'] = followUps;
+
+          final aiMsg = NegotiationMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            type: MessageType.ai,
+            text: summaryText + followText,
+            senderRole: null,
+            senderName: 'AI Moderator',
+            attachments: [],
+            timestamp: DateTime.now(),
+            aiAnalysis: analysis,
+          );
+
+          state = state.copyWith(messages: [...state.messages, aiMsg]);
+        }
+      });
+    }
   }
 
   /// Handle agreement from user
@@ -742,6 +845,18 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
       currentStep: TransactionStep.completed,
     );
 
+    // Transfer funds locally: buyer should deduct their wallet balance
+    final escrow = ref.read(escrowStateProvider);
+    final amount = escrow.amount;
+    try {
+      final myRole = ref.read(contractStateProvider).myRole;
+      final bool iAmBuyer = myRole == UserRole.buyer;
+      // If I'm the buyer, deduct my balance. (Seller will credit on receiveBuyerApproval.)
+      ref.read(walletStateProvider.notifier).applyBuyerToVendorTransfer(iAmBuyer: iAmBuyer, amount: amount);
+    } catch (e) {
+      debugPrint('⚠️ Wallet transfer failed locally: $e');
+    }
+
     // Notify seller
     ref.read(connectionStateProvider.notifier).sendMessage({
       "type": "BUYER_APPROVED_DELIVERY",
@@ -759,6 +874,18 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
       deliveryConfirmed: true,
       currentStep: TransactionStep.completed,
     );
+
+    // Transfer funds locally: seller should credit their wallet
+    final escrow = ref.read(escrowStateProvider);
+    final amount = escrow.amount;
+    try {
+      final myRole = ref.read(contractStateProvider).myRole;
+      final bool iAmBuyer = myRole == UserRole.buyer;
+      // If I'm the seller (iAmBuyer==false), credit my balance.
+      ref.read(walletStateProvider.notifier).applyBuyerToVendorTransfer(iAmBuyer: iAmBuyer, amount: amount);
+    } catch (e) {
+      debugPrint('⚠️ Wallet transfer failed locally on receive: $e');
+    }
 
     ref
         .read(connectionStateProvider.notifier)
@@ -779,6 +906,79 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
     ref
         .read(connectionStateProvider.notifier)
         .updateLog("🔄 Proof submission reset. Please resubmit.");
+  }
+
+  /// Create and apply an AI suggested counter-proposal (by suggested price)
+  void applyAISuggestion(num suggestedPrice) {
+    if (state.currentDraft == null || state.myRole == null) return;
+
+    final contractService = ref.read(contractServiceProvider);
+
+    // Improved price extraction to support multiple formats
+    final currentText = state.currentDraft!.text;
+    String? originalFound;
+
+    // Patterns to try in order
+    final patterns = [
+      RegExp(r"USD\s*([0-9]{1,6}(?:\.[0-9]{1,2})?)", caseSensitive: false),
+      RegExp(r"\$([0-9]{1,6}(?:\.[0-9]{1,2})?)"),
+      RegExp(r"([0-9]{1,6}(?:\.[0-9]{1,2})?)\s*USD", caseSensitive: false),
+      RegExp(r"([0-9]{1,6}(?:\.[0-9]{1,2})?)\s*(?:dollars|usd|us\$)", caseSensitive: false),
+      RegExp(r"\b([0-9]{1,6}(?:\.[0-9]{1,2})?)\b"),
+    ];
+
+    for (final p in patterns) {
+      final m = p.firstMatch(currentText);
+      if (m != null) {
+        originalFound = m.group(0);
+        break;
+      }
+    }
+
+    String newText;
+    if (originalFound != null) {
+      // Replace only the first occurrence to avoid accidental multiple replacements
+      newText = currentText.replaceFirst(originalFound, '\$${suggestedPrice.toStringAsFixed(2)}');
+    } else {
+      newText = '${currentText.trim()} Price: \$${suggestedPrice.toStringAsFixed(2)}';
+    }
+
+    final newDraft = contractService.createCounterProposal(
+      currentDraft: state.currentDraft!,
+      newText: newText,
+      proposedBy: state.myRole!,
+      aiSuggestion: 'Applied AI suggested price: \$${suggestedPrice.toStringAsFixed(2)}',
+    );
+
+    final updatedHistory = [...state.draftHistory, newDraft];
+
+    state = state.copyWith(
+      currentDraft: newDraft,
+      draftHistory: updatedHistory,
+      status: NegotiationStatus.awaitingPeerResponse,
+    );
+
+    // Append as chat message
+    final msg = NegotiationMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: MessageType.contract,
+      text: newDraft.text,
+      senderRole: state.myRole,
+      senderName: null,
+      attachments: [],
+      timestamp: DateTime.now(),
+      aiAnalysis: {'appliedSuggestion': suggestedPrice},
+    );
+    state = state.copyWith(messages: [...state.messages, msg]);
+
+    // Send to peer
+    ref.read(connectionStateProvider.notifier).sendMessage({
+      'type': 'DRAFT_PROPOSAL',
+      'version': newDraft.version,
+      'text': newDraft.text,
+      'proposedBy': state.myRole == UserRole.seller ? 'seller' : 'buyer',
+      'aiSuggestion': newDraft.aiSuggestion,
+    });
   }
 }
 
@@ -1045,7 +1245,7 @@ class AIConsensusStateNotifier extends StateNotifier<AIConsensusState> {
 
     if (hasImage) {
       try {
-        final file = File(imagePath!);
+        final file = File(imagePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
           encodedImage = base64Encode(bytes);
@@ -1181,6 +1381,52 @@ class AIConsensusStateNotifier extends StateNotifier<AIConsensusState> {
             "🎉 CONSENSUS REACHED! Both AIs approved. Releasing funds...",
           );
       ref.read(escrowStateProvider.notifier).releaseFunds();
+    }
+  }
+}
+
+// Wallet State
+class WalletState {
+  final double myBalance;
+  final double peerBalance;
+
+  const WalletState({this.myBalance = 1538.1, this.peerBalance = 0.0});
+
+  WalletState copyWith({double? myBalance, double? peerBalance}) {
+    return WalletState(
+      myBalance: myBalance ?? this.myBalance,
+      peerBalance: peerBalance ?? this.peerBalance,
+    );
+  }
+}
+
+class WalletStateNotifier extends StateNotifier<WalletState> {
+  WalletStateNotifier() : super(const WalletState());
+
+  void creditMyBalance(double amount) {
+    state = state.copyWith(myBalance: state.myBalance + amount);
+  }
+
+  void deductMyBalance(double amount) {
+    state = state.copyWith(myBalance: (state.myBalance - amount).clamp(0.0, double.infinity));
+  }
+
+  void creditPeer(double amount) {
+    state = state.copyWith(peerBalance: state.peerBalance + amount);
+  }
+
+  void deductPeer(double amount) {
+    state = state.copyWith(peerBalance: (state.peerBalance - amount).clamp(0.0, double.infinity));
+  }
+
+  /// Convenience: buyer paid vendor
+  void applyBuyerToVendorTransfer({required bool iAmBuyer, required double amount}) {
+    if (iAmBuyer) {
+      // I'm the buyer: deduct my balance
+      deductMyBalance(amount);
+    } else {
+      // I'm the seller: credit my balance
+      creditMyBalance(amount);
     }
   }
 }
