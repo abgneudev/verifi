@@ -48,6 +48,11 @@ _$ContractStateImpl _$$ContractStateImplFromJson(Map<String, dynamic> json) =>
       peerApproval: json['peerApproval'] as bool? ?? false,
       isFinalized: json['isFinalized'] as bool? ?? false,
       finalHash: json['finalHash'] as String?,
+      currentStep:
+          $enumDecodeNullable(_$TransactionStepEnumMap, json['currentStep']) ??
+          TransactionStep.negotiation,
+      escrowDeposited: json['escrowDeposited'] as bool? ?? false,
+      deliveryConfirmed: json['deliveryConfirmed'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ContractStateImplToJson(_$ContractStateImpl instance) =>
@@ -62,6 +67,9 @@ Map<String, dynamic> _$$ContractStateImplToJson(_$ContractStateImpl instance) =>
       'peerApproval': instance.peerApproval,
       'isFinalized': instance.isFinalized,
       'finalHash': instance.finalHash,
+      'currentStep': _$TransactionStepEnumMap[instance.currentStep]!,
+      'escrowDeposited': instance.escrowDeposited,
+      'deliveryConfirmed': instance.deliveryConfirmed,
     };
 
 const _$NegotiationStatusEnumMap = {
@@ -70,4 +78,11 @@ const _$NegotiationStatusEnumMap = {
   NegotiationStatus.awaitingMyResponse: 'awaitingMyResponse',
   NegotiationStatus.agreed: 'agreed',
   NegotiationStatus.finalized: 'finalized',
+};
+
+const _$TransactionStepEnumMap = {
+  TransactionStep.negotiation: 'negotiation',
+  TransactionStep.escrow: 'escrow',
+  TransactionStep.delivery: 'delivery',
+  TransactionStep.completed: 'completed',
 };

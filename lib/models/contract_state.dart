@@ -13,6 +13,13 @@ enum NegotiationStatus {
   finalized,
 }
 
+enum TransactionStep {
+  negotiation, // Step 1: Contract negotiation
+  escrow, // Step 2: Escrow payment
+  delivery, // Step 3: Delivery confirmation
+  completed, // Transaction complete
+}
+
 @freezed
 class ContractDraft with _$ContractDraft {
   const factory ContractDraft({
@@ -53,6 +60,11 @@ class ContractState with _$ContractState {
     @Default(false) bool peerApproval,
     @Default(false) bool isFinalized,
     String? finalHash,
+
+    // Transaction step tracking
+    @Default(TransactionStep.negotiation) TransactionStep currentStep,
+    @Default(false) bool escrowDeposited,
+    @Default(false) bool deliveryConfirmed,
   }) = _ContractState;
 
   factory ContractState.fromJson(Map<String, dynamic> json) =>

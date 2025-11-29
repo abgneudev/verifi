@@ -142,11 +142,16 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
       );
 
       // Now that we're connected, set up roles and send initial message
+      // Advertiser (Send button) = Buyer (sends money)
+      // Discoverer (Receive button) = Seller (receives money)
+      debugPrint('🔍 Role assignment: isAdvertiser=${state.isAdvertiser}');
       if (state.isAdvertiser) {
+        debugPrint('   → Assigning BUYER role (Send button was clicked)');
         ref
             .read(contractStateProvider.notifier)
             .initializeAsRole(UserRole.buyer);
       } else {
+        debugPrint('   → Assigning SELLER role (Receive button was clicked)');
         ref
             .read(contractStateProvider.notifier)
             .initializeAsRole(UserRole.seller);
@@ -218,6 +223,16 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
         return;
       }
 
+      if (data["type"] == "ESCROW_DEPOSITED") {
+        ref.read(contractStateProvider.notifier).receiveEscrowDeposited();
+        return;
+      }
+
+      if (data["type"] == "DELIVERY_CONFIRMED") {
+        ref.read(contractStateProvider.notifier).receiveDeliveryConfirmed();
+        return;
+      }
+
       if (data["type"] == "PROOF_SUBMISSION") {
         updateLog("📨 Received proof payload from peer. Running AI check...");
         await ref
@@ -282,7 +297,11 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
 
   /// Set up roles after connection
   void setupRoles({required bool isSeller}) {
-    final myRole = isSeller ? UserRole.seller : UserRole.buyer;
+    // isSeller indicates the SENDER's role, so we assign the OPPOSITE role
+    final myRole = isSeller ? UserRole.buyer : UserRole.seller;
+    debugPrint(
+      '🔄 setupRoles: sender is ${isSeller ? "SELLER" : "BUYER"}, so I am ${myRole == UserRole.seller ? "SELLER" : "BUYER"}',
+    );
     state = state.copyWith(
       myRole: myRole,
       status: myRole == UserRole.seller
@@ -563,6 +582,7 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
       state = state.copyWith(
         isFinalized: true,
         status: NegotiationStatus.finalized,
+        currentStep: TransactionStep.escrow,
       );
       ref
           .read(connectionStateProvider.notifier)
@@ -570,6 +590,60 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
             "🔒 CONTRACT LOCKED! Both parties agreed.\nHash: ${state.finalHash!.substring(0, 16)}...",
           );
     }
+  }
+
+  /// Mark escrow as deposited and move to delivery step
+  void markEscrowDeposited() {
+    state = state.copyWith(
+      escrowDeposited: true,
+      currentStep: TransactionStep.delivery,
+    );
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("💰 Escrow deposited. Proceeding to delivery...");
+
+    // Notify peer
+    ref.read(connectionStateProvider.notifier).sendMessage({
+      "type": "ESCROW_DEPOSITED",
+    });
+  }
+
+  /// Receive escrow deposited notification from peer
+  void receiveEscrowDeposited() {
+    state = state.copyWith(
+      escrowDeposited: true,
+      currentStep: TransactionStep.delivery,
+    );
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("💰 Peer deposited to escrow!");
+  }
+
+  /// Mark delivery as confirmed
+  void markDeliveryConfirmed() {
+    state = state.copyWith(
+      deliveryConfirmed: true,
+      currentStep: TransactionStep.completed,
+    );
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("✅ Delivery confirmed! Transaction complete.");
+
+    // Notify peer
+    ref.read(connectionStateProvider.notifier).sendMessage({
+      "type": "DELIVERY_CONFIRMED",
+    });
+  }
+
+  /// Receive delivery confirmation from peer
+  void receiveDeliveryConfirmed() {
+    state = state.copyWith(
+      deliveryConfirmed: true,
+      currentStep: TransactionStep.completed,
+    );
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("✅ Peer confirmed delivery! Transaction complete.");
   }
 }
 

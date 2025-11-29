@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../design_system.dart';
 import '../providers/app_providers.dart';
 import '../models/contract_state.dart';
+import 'escrow_payment_page.dart';
 
 class ContractNegotiationPage extends ConsumerStatefulWidget {
   const ContractNegotiationPage({super.key});
@@ -33,11 +34,13 @@ class _ContractNegotiationPageState
   Widget build(BuildContext context) {
     final contractState = ref.watch(contractStateProvider);
 
-    // If contract is finalized, pop back to main screen
+    // If contract is finalized, navigate to Step 2 (Escrow Payment)
     if (contractState.isFinalized) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const EscrowPaymentPage()),
+          );
         }
       });
     }
@@ -54,6 +57,7 @@ class _ContractNegotiationPageState
         title: const Text("CONTRACT NEGOTIATION"),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         height: MediaQuery.of(context).size.height,

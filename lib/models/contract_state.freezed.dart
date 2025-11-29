@@ -290,7 +290,11 @@ mixin _$ContractState {
   bool get myApproval => throw _privateConstructorUsedError;
   bool get peerApproval => throw _privateConstructorUsedError;
   bool get isFinalized => throw _privateConstructorUsedError;
-  String? get finalHash => throw _privateConstructorUsedError;
+  String? get finalHash =>
+      throw _privateConstructorUsedError; // Transaction step tracking
+  TransactionStep get currentStep => throw _privateConstructorUsedError;
+  bool get escrowDeposited => throw _privateConstructorUsedError;
+  bool get deliveryConfirmed => throw _privateConstructorUsedError;
 
   /// Serializes this ContractState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -320,6 +324,9 @@ abstract class $ContractStateCopyWith<$Res> {
     bool peerApproval,
     bool isFinalized,
     String? finalHash,
+    TransactionStep currentStep,
+    bool escrowDeposited,
+    bool deliveryConfirmed,
   });
 
   $ContractDraftCopyWith<$Res>? get currentDraft;
@@ -350,6 +357,9 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
     Object? peerApproval = null,
     Object? isFinalized = null,
     Object? finalHash = freezed,
+    Object? currentStep = null,
+    Object? escrowDeposited = null,
+    Object? deliveryConfirmed = null,
   }) {
     return _then(
       _value.copyWith(
@@ -393,6 +403,18 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
                 ? _value.finalHash
                 : finalHash // ignore: cast_nullable_to_non_nullable
                       as String?,
+            currentStep: null == currentStep
+                ? _value.currentStep
+                : currentStep // ignore: cast_nullable_to_non_nullable
+                      as TransactionStep,
+            escrowDeposited: null == escrowDeposited
+                ? _value.escrowDeposited
+                : escrowDeposited // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            deliveryConfirmed: null == deliveryConfirmed
+                ? _value.deliveryConfirmed
+                : deliveryConfirmed // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -433,6 +455,9 @@ abstract class _$$ContractStateImplCopyWith<$Res>
     bool peerApproval,
     bool isFinalized,
     String? finalHash,
+    TransactionStep currentStep,
+    bool escrowDeposited,
+    bool deliveryConfirmed,
   });
 
   @override
@@ -463,6 +488,9 @@ class __$$ContractStateImplCopyWithImpl<$Res>
     Object? peerApproval = null,
     Object? isFinalized = null,
     Object? finalHash = freezed,
+    Object? currentStep = null,
+    Object? escrowDeposited = null,
+    Object? deliveryConfirmed = null,
   }) {
     return _then(
       _$ContractStateImpl(
@@ -506,6 +534,18 @@ class __$$ContractStateImplCopyWithImpl<$Res>
             ? _value.finalHash
             : finalHash // ignore: cast_nullable_to_non_nullable
                   as String?,
+        currentStep: null == currentStep
+            ? _value.currentStep
+            : currentStep // ignore: cast_nullable_to_non_nullable
+                  as TransactionStep,
+        escrowDeposited: null == escrowDeposited
+            ? _value.escrowDeposited
+            : escrowDeposited // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        deliveryConfirmed: null == deliveryConfirmed
+            ? _value.deliveryConfirmed
+            : deliveryConfirmed // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -525,6 +565,9 @@ class _$ContractStateImpl implements _ContractState {
     this.peerApproval = false,
     this.isFinalized = false,
     this.finalHash,
+    this.currentStep = TransactionStep.negotiation,
+    this.escrowDeposited = false,
+    this.deliveryConfirmed = false,
   }) : _draftHistory = draftHistory;
 
   factory _$ContractStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -570,10 +613,20 @@ class _$ContractStateImpl implements _ContractState {
   final bool isFinalized;
   @override
   final String? finalHash;
+  // Transaction step tracking
+  @override
+  @JsonKey()
+  final TransactionStep currentStep;
+  @override
+  @JsonKey()
+  final bool escrowDeposited;
+  @override
+  @JsonKey()
+  final bool deliveryConfirmed;
 
   @override
   String toString() {
-    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash)';
+    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash, currentStep: $currentStep, escrowDeposited: $escrowDeposited, deliveryConfirmed: $deliveryConfirmed)';
   }
 
   @override
@@ -600,7 +653,13 @@ class _$ContractStateImpl implements _ContractState {
             (identical(other.isFinalized, isFinalized) ||
                 other.isFinalized == isFinalized) &&
             (identical(other.finalHash, finalHash) ||
-                other.finalHash == finalHash));
+                other.finalHash == finalHash) &&
+            (identical(other.currentStep, currentStep) ||
+                other.currentStep == currentStep) &&
+            (identical(other.escrowDeposited, escrowDeposited) ||
+                other.escrowDeposited == escrowDeposited) &&
+            (identical(other.deliveryConfirmed, deliveryConfirmed) ||
+                other.deliveryConfirmed == deliveryConfirmed));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -617,6 +676,9 @@ class _$ContractStateImpl implements _ContractState {
     peerApproval,
     isFinalized,
     finalHash,
+    currentStep,
+    escrowDeposited,
+    deliveryConfirmed,
   );
 
   /// Create a copy of ContractState
@@ -645,6 +707,9 @@ abstract class _ContractState implements ContractState {
     final bool peerApproval,
     final bool isFinalized,
     final String? finalHash,
+    final TransactionStep currentStep,
+    final bool escrowDeposited,
+    final bool deliveryConfirmed,
   }) = _$ContractStateImpl;
 
   factory _ContractState.fromJson(Map<String, dynamic> json) =
@@ -670,7 +735,13 @@ abstract class _ContractState implements ContractState {
   @override
   bool get isFinalized;
   @override
-  String? get finalHash;
+  String? get finalHash; // Transaction step tracking
+  @override
+  TransactionStep get currentStep;
+  @override
+  bool get escrowDeposited;
+  @override
+  bool get deliveryConfirmed;
 
   /// Create a copy of ContractState
   /// with the given fields replaced by the non-null parameter values.
