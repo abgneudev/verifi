@@ -28,6 +28,8 @@ class _FindingMerchantScreenState extends ConsumerState<FindingMerchantScreen>
   late Animation<double> _rotationAnimation;
   late Animation<double> _pulseAnimation;
   late Animation<double> _fadeAnimation;
+  ProviderSubscription<conn.AppConnectionState>? _connectionSubscription;
+  bool _hasPoppedAfterConnect = false;
 
   String _statusText = 'Finding merchant';
   int _dotCount = 0;
@@ -36,10 +38,20 @@ class _FindingMerchantScreenState extends ConsumerState<FindingMerchantScreen>
   void initState() {
     super.initState();
 
-    // Listen to connection state changes
-    ref.listenManual(connectionStateProvider, (previous, next) {
-      // Auto-close when connected
-      if (next.status == conn.ConnectionStatus.connected && mounted) {
+    _connectionSubscription = ref.listenManual(connectionStateProvider, (
+      previous,
+      next,
+    ) {
+      debugPrint(
+        '🔔 FindingMerchantScreen: Connection status changed to ${next.status}',
+      );
+      final shouldClose =
+          !_hasPoppedAfterConnect &&
+          next.status == conn.ConnectionStatus.connected &&
+          mounted;
+      if (shouldClose) {
+        _hasPoppedAfterConnect = true;
+        debugPrint('🚪 Closing FindingMerchantScreen...');
         Navigator.of(context).pop();
       }
     });
@@ -125,6 +137,7 @@ class _FindingMerchantScreenState extends ConsumerState<FindingMerchantScreen>
 
   @override
   void dispose() {
+    _connectionSubscription?.close();
     _rotationController.dispose();
     _pulseController.dispose();
     _dotsController.dispose();

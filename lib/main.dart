@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'design_system.dart';
+import 'providers/app_providers.dart';
 import 'widgets/status_monitor.dart';
 import 'widgets/balance_card.dart';
 import 'widgets/info_tiles.dart';
 import 'widgets/statement_summary.dart';
 import 'widgets/connection_buttons.dart';
+import 'widgets/contract_draft_section.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -30,6 +32,11 @@ class EscrowScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final connectionState = ref.watch(connectionStateProvider);
+    debugPrint(
+      '🏠 EscrowScreen rebuild - connected: ${connectionState.connectedEndpointId}',
+    );
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -60,6 +67,8 @@ class EscrowScreen extends ConsumerWidget {
                 const StatementSummary(),
                 const SizedBox(height: 20),
                 const ConnectionButtons(),
+                const SizedBox(height: 20),
+                const ContractDraftSection(),
                 const SizedBox(height: 40),
               ],
             ),

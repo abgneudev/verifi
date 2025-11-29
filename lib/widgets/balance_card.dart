@@ -40,7 +40,7 @@ class BalanceCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'STATEMENT BALANCE',
+                  'AVAILABLE BALANCE',
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     color: Colors.white.withValues(alpha: 0.5),
