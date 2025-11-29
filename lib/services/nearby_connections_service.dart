@@ -26,9 +26,9 @@ class NearbyConnectionsService {
       Permission.locationWhenInUse,
       Permission.nearbyWifiDevices,
     ];
-    
+
     final statuses = await permissions.request();
-    
+
     // Check if critical permissions are denied
     if (statuses[Permission.location] != PermissionStatus.granted) {
       throw Exception('Location permission is required for Nearby Connections');
