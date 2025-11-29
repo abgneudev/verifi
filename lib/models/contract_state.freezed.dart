@@ -294,7 +294,15 @@ mixin _$ContractState {
       throw _privateConstructorUsedError; // Transaction step tracking
   TransactionStep get currentStep => throw _privateConstructorUsedError;
   bool get escrowDeposited => throw _privateConstructorUsedError;
-  bool get deliveryConfirmed => throw _privateConstructorUsedError;
+  bool get deliveryConfirmed =>
+      throw _privateConstructorUsedError; // Proof of work submission
+  bool get proofSubmitted => throw _privateConstructorUsedError;
+  String? get proofText => throw _privateConstructorUsedError;
+  String? get proofImagePath => throw _privateConstructorUsedError;
+  String? get aiProofAnalysis => throw _privateConstructorUsedError;
+  bool get aiApprovedProof => throw _privateConstructorUsedError;
+  DateTime? get proofSubmittedAt => throw _privateConstructorUsedError;
+  bool get buyerApprovedDelivery => throw _privateConstructorUsedError;
 
   /// Serializes this ContractState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -327,6 +335,13 @@ abstract class $ContractStateCopyWith<$Res> {
     TransactionStep currentStep,
     bool escrowDeposited,
     bool deliveryConfirmed,
+    bool proofSubmitted,
+    String? proofText,
+    String? proofImagePath,
+    String? aiProofAnalysis,
+    bool aiApprovedProof,
+    DateTime? proofSubmittedAt,
+    bool buyerApprovedDelivery,
   });
 
   $ContractDraftCopyWith<$Res>? get currentDraft;
@@ -360,6 +375,13 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
     Object? currentStep = null,
     Object? escrowDeposited = null,
     Object? deliveryConfirmed = null,
+    Object? proofSubmitted = null,
+    Object? proofText = freezed,
+    Object? proofImagePath = freezed,
+    Object? aiProofAnalysis = freezed,
+    Object? aiApprovedProof = null,
+    Object? proofSubmittedAt = freezed,
+    Object? buyerApprovedDelivery = null,
   }) {
     return _then(
       _value.copyWith(
@@ -415,6 +437,34 @@ class _$ContractStateCopyWithImpl<$Res, $Val extends ContractState>
                 ? _value.deliveryConfirmed
                 : deliveryConfirmed // ignore: cast_nullable_to_non_nullable
                       as bool,
+            proofSubmitted: null == proofSubmitted
+                ? _value.proofSubmitted
+                : proofSubmitted // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            proofText: freezed == proofText
+                ? _value.proofText
+                : proofText // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            proofImagePath: freezed == proofImagePath
+                ? _value.proofImagePath
+                : proofImagePath // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            aiProofAnalysis: freezed == aiProofAnalysis
+                ? _value.aiProofAnalysis
+                : aiProofAnalysis // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            aiApprovedProof: null == aiApprovedProof
+                ? _value.aiApprovedProof
+                : aiApprovedProof // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            proofSubmittedAt: freezed == proofSubmittedAt
+                ? _value.proofSubmittedAt
+                : proofSubmittedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            buyerApprovedDelivery: null == buyerApprovedDelivery
+                ? _value.buyerApprovedDelivery
+                : buyerApprovedDelivery // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -458,6 +508,13 @@ abstract class _$$ContractStateImplCopyWith<$Res>
     TransactionStep currentStep,
     bool escrowDeposited,
     bool deliveryConfirmed,
+    bool proofSubmitted,
+    String? proofText,
+    String? proofImagePath,
+    String? aiProofAnalysis,
+    bool aiApprovedProof,
+    DateTime? proofSubmittedAt,
+    bool buyerApprovedDelivery,
   });
 
   @override
@@ -491,6 +548,13 @@ class __$$ContractStateImplCopyWithImpl<$Res>
     Object? currentStep = null,
     Object? escrowDeposited = null,
     Object? deliveryConfirmed = null,
+    Object? proofSubmitted = null,
+    Object? proofText = freezed,
+    Object? proofImagePath = freezed,
+    Object? aiProofAnalysis = freezed,
+    Object? aiApprovedProof = null,
+    Object? proofSubmittedAt = freezed,
+    Object? buyerApprovedDelivery = null,
   }) {
     return _then(
       _$ContractStateImpl(
@@ -546,6 +610,34 @@ class __$$ContractStateImplCopyWithImpl<$Res>
             ? _value.deliveryConfirmed
             : deliveryConfirmed // ignore: cast_nullable_to_non_nullable
                   as bool,
+        proofSubmitted: null == proofSubmitted
+            ? _value.proofSubmitted
+            : proofSubmitted // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        proofText: freezed == proofText
+            ? _value.proofText
+            : proofText // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        proofImagePath: freezed == proofImagePath
+            ? _value.proofImagePath
+            : proofImagePath // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        aiProofAnalysis: freezed == aiProofAnalysis
+            ? _value.aiProofAnalysis
+            : aiProofAnalysis // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        aiApprovedProof: null == aiApprovedProof
+            ? _value.aiApprovedProof
+            : aiApprovedProof // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        proofSubmittedAt: freezed == proofSubmittedAt
+            ? _value.proofSubmittedAt
+            : proofSubmittedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        buyerApprovedDelivery: null == buyerApprovedDelivery
+            ? _value.buyerApprovedDelivery
+            : buyerApprovedDelivery // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -568,6 +660,13 @@ class _$ContractStateImpl implements _ContractState {
     this.currentStep = TransactionStep.negotiation,
     this.escrowDeposited = false,
     this.deliveryConfirmed = false,
+    this.proofSubmitted = false,
+    this.proofText,
+    this.proofImagePath,
+    this.aiProofAnalysis,
+    this.aiApprovedProof = false,
+    this.proofSubmittedAt,
+    this.buyerApprovedDelivery = false,
   }) : _draftHistory = draftHistory;
 
   factory _$ContractStateImpl.fromJson(Map<String, dynamic> json) =>
@@ -623,10 +722,28 @@ class _$ContractStateImpl implements _ContractState {
   @override
   @JsonKey()
   final bool deliveryConfirmed;
+  // Proof of work submission
+  @override
+  @JsonKey()
+  final bool proofSubmitted;
+  @override
+  final String? proofText;
+  @override
+  final String? proofImagePath;
+  @override
+  final String? aiProofAnalysis;
+  @override
+  @JsonKey()
+  final bool aiApprovedProof;
+  @override
+  final DateTime? proofSubmittedAt;
+  @override
+  @JsonKey()
+  final bool buyerApprovedDelivery;
 
   @override
   String toString() {
-    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash, currentStep: $currentStep, escrowDeposited: $escrowDeposited, deliveryConfirmed: $deliveryConfirmed)';
+    return 'ContractState(myRole: $myRole, currentDraft: $currentDraft, draftHistory: $draftHistory, myPrivateInput: $myPrivateInput, status: $status, aiMediation: $aiMediation, myApproval: $myApproval, peerApproval: $peerApproval, isFinalized: $isFinalized, finalHash: $finalHash, currentStep: $currentStep, escrowDeposited: $escrowDeposited, deliveryConfirmed: $deliveryConfirmed, proofSubmitted: $proofSubmitted, proofText: $proofText, proofImagePath: $proofImagePath, aiProofAnalysis: $aiProofAnalysis, aiApprovedProof: $aiApprovedProof, proofSubmittedAt: $proofSubmittedAt, buyerApprovedDelivery: $buyerApprovedDelivery)';
   }
 
   @override
@@ -659,12 +776,26 @@ class _$ContractStateImpl implements _ContractState {
             (identical(other.escrowDeposited, escrowDeposited) ||
                 other.escrowDeposited == escrowDeposited) &&
             (identical(other.deliveryConfirmed, deliveryConfirmed) ||
-                other.deliveryConfirmed == deliveryConfirmed));
+                other.deliveryConfirmed == deliveryConfirmed) &&
+            (identical(other.proofSubmitted, proofSubmitted) ||
+                other.proofSubmitted == proofSubmitted) &&
+            (identical(other.proofText, proofText) ||
+                other.proofText == proofText) &&
+            (identical(other.proofImagePath, proofImagePath) ||
+                other.proofImagePath == proofImagePath) &&
+            (identical(other.aiProofAnalysis, aiProofAnalysis) ||
+                other.aiProofAnalysis == aiProofAnalysis) &&
+            (identical(other.aiApprovedProof, aiApprovedProof) ||
+                other.aiApprovedProof == aiApprovedProof) &&
+            (identical(other.proofSubmittedAt, proofSubmittedAt) ||
+                other.proofSubmittedAt == proofSubmittedAt) &&
+            (identical(other.buyerApprovedDelivery, buyerApprovedDelivery) ||
+                other.buyerApprovedDelivery == buyerApprovedDelivery));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     myRole,
     currentDraft,
@@ -679,7 +810,14 @@ class _$ContractStateImpl implements _ContractState {
     currentStep,
     escrowDeposited,
     deliveryConfirmed,
-  );
+    proofSubmitted,
+    proofText,
+    proofImagePath,
+    aiProofAnalysis,
+    aiApprovedProof,
+    proofSubmittedAt,
+    buyerApprovedDelivery,
+  ]);
 
   /// Create a copy of ContractState
   /// with the given fields replaced by the non-null parameter values.
@@ -710,6 +848,13 @@ abstract class _ContractState implements ContractState {
     final TransactionStep currentStep,
     final bool escrowDeposited,
     final bool deliveryConfirmed,
+    final bool proofSubmitted,
+    final String? proofText,
+    final String? proofImagePath,
+    final String? aiProofAnalysis,
+    final bool aiApprovedProof,
+    final DateTime? proofSubmittedAt,
+    final bool buyerApprovedDelivery,
   }) = _$ContractStateImpl;
 
   factory _ContractState.fromJson(Map<String, dynamic> json) =
@@ -741,7 +886,21 @@ abstract class _ContractState implements ContractState {
   @override
   bool get escrowDeposited;
   @override
-  bool get deliveryConfirmed;
+  bool get deliveryConfirmed; // Proof of work submission
+  @override
+  bool get proofSubmitted;
+  @override
+  String? get proofText;
+  @override
+  String? get proofImagePath;
+  @override
+  String? get aiProofAnalysis;
+  @override
+  bool get aiApprovedProof;
+  @override
+  DateTime? get proofSubmittedAt;
+  @override
+  bool get buyerApprovedDelivery;
 
   /// Create a copy of ContractState
   /// with the given fields replaced by the non-null parameter values.

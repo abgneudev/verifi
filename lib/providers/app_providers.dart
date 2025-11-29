@@ -233,6 +233,23 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
         return;
       }
 
+      if (data["type"] == "PROOF_SUBMITTED") {
+        ref
+            .read(contractStateProvider.notifier)
+            .receiveProofSubmission(
+              textProof: data["textProof"] as String,
+              hasImage: data["hasImage"] as bool,
+              aiAnalysis: data["aiAnalysis"] as String,
+              aiApproved: data["aiApproved"] as bool,
+            );
+        return;
+      }
+
+      if (data["type"] == "BUYER_APPROVED_DELIVERY") {
+        ref.read(contractStateProvider.notifier).receiveBuyerApproval();
+        return;
+      }
+
       if (data["type"] == "PROOF_SUBMISSION") {
         updateLog("📨 Received proof payload from peer. Running AI check...");
         await ref
@@ -644,6 +661,124 @@ class ContractStateNotifier extends StateNotifier<ContractState> {
     ref
         .read(connectionStateProvider.notifier)
         .updateLog("✅ Peer confirmed delivery! Transaction complete.");
+  }
+
+  /// Seller submits proof of work completion
+  Future<void> submitProof({String? textProof, String? imagePath}) async {
+    if (state.currentDraft == null) {
+      throw Exception('No contract to verify against');
+    }
+
+    final cactusService = ref.read(cactusAIServiceProvider);
+
+    // Analyze proof using Cactus AI
+    debugPrint('🔍 Analyzing proof with Cactus AI...');
+    final analysis = await cactusService.analyzeProof(
+      imagePath: imagePath,
+      textProof: textProof,
+      contractText: state.currentDraft!.text,
+    );
+
+    debugPrint('🤖 AI Analysis: $analysis');
+
+    final isApproved = cactusService.isApproved(analysis);
+
+    state = state.copyWith(
+      proofSubmitted: true,
+      proofText: textProof,
+      proofImagePath: imagePath,
+      aiProofAnalysis: analysis,
+      aiApprovedProof: isApproved,
+      proofSubmittedAt: DateTime.now(),
+    );
+
+    // Notify buyer about proof submission
+    ref.read(connectionStateProvider.notifier).sendMessage({
+      "type": "PROOF_SUBMITTED",
+      "textProof": textProof ?? '',
+      "hasImage": imagePath != null,
+      "aiAnalysis": analysis,
+      "aiApproved": isApproved,
+    });
+
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog(
+          isApproved
+              ? "✅ Proof submitted! AI approved."
+              : "⚠️ Proof submitted but AI has concerns.",
+        );
+  }
+
+  /// Receive proof submission notification from seller
+  void receiveProofSubmission({
+    required String textProof,
+    required bool hasImage,
+    required String aiAnalysis,
+    required bool aiApproved,
+  }) {
+    state = state.copyWith(
+      proofSubmitted: true,
+      proofText: textProof,
+      aiProofAnalysis: aiAnalysis,
+      aiApprovedProof: aiApproved,
+      proofSubmittedAt: DateTime.now(),
+    );
+
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog(
+          aiApproved
+              ? "📦 Seller submitted proof. AI approved! Review to confirm."
+              : "📦 Seller submitted proof. AI has concerns. Please review.",
+        );
+  }
+
+  /// Buyer approves delivery after reviewing proof
+  void buyerApprovesDelivery() {
+    state = state.copyWith(
+      buyerApprovedDelivery: true,
+      deliveryConfirmed: true,
+      currentStep: TransactionStep.completed,
+    );
+
+    // Notify seller
+    ref.read(connectionStateProvider.notifier).sendMessage({
+      "type": "BUYER_APPROVED_DELIVERY",
+    });
+
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("✅ You approved delivery! Funds released to seller.");
+  }
+
+  /// Seller receives buyer approval
+  void receiveBuyerApproval() {
+    state = state.copyWith(
+      buyerApprovedDelivery: true,
+      deliveryConfirmed: true,
+      currentStep: TransactionStep.completed,
+    );
+
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("✅ Buyer approved delivery! Funds released.");
+  }
+
+  /// Reset proof submission to allow resubmission (when AI rejects)
+  void resetProofSubmission() {
+    state = state.copyWith(
+      proofSubmitted: false,
+      proofText: null,
+      proofImagePath: null,
+      aiProofAnalysis: null,
+      aiApprovedProof: false,
+      proofSubmittedAt: null,
+    );
+
+    ref
+        .read(connectionStateProvider.notifier)
+        .updateLog("🔄 Proof submission reset. Please resubmit.");
   }
 }
 

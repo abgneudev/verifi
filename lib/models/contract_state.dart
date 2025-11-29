@@ -65,6 +65,15 @@ class ContractState with _$ContractState {
     @Default(TransactionStep.negotiation) TransactionStep currentStep,
     @Default(false) bool escrowDeposited,
     @Default(false) bool deliveryConfirmed,
+
+    // Proof of work submission
+    @Default(false) bool proofSubmitted,
+    String? proofText,
+    String? proofImagePath,
+    String? aiProofAnalysis,
+    @Default(false) bool aiApprovedProof,
+    DateTime? proofSubmittedAt,
+    @Default(false) bool buyerApprovedDelivery,
   }) = _ContractState;
 
   factory ContractState.fromJson(Map<String, dynamic> json) =>

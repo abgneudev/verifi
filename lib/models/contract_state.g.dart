@@ -53,6 +53,15 @@ _$ContractStateImpl _$$ContractStateImplFromJson(Map<String, dynamic> json) =>
           TransactionStep.negotiation,
       escrowDeposited: json['escrowDeposited'] as bool? ?? false,
       deliveryConfirmed: json['deliveryConfirmed'] as bool? ?? false,
+      proofSubmitted: json['proofSubmitted'] as bool? ?? false,
+      proofText: json['proofText'] as String?,
+      proofImagePath: json['proofImagePath'] as String?,
+      aiProofAnalysis: json['aiProofAnalysis'] as String?,
+      aiApprovedProof: json['aiApprovedProof'] as bool? ?? false,
+      proofSubmittedAt: json['proofSubmittedAt'] == null
+          ? null
+          : DateTime.parse(json['proofSubmittedAt'] as String),
+      buyerApprovedDelivery: json['buyerApprovedDelivery'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ContractStateImplToJson(_$ContractStateImpl instance) =>
@@ -70,6 +79,13 @@ Map<String, dynamic> _$$ContractStateImplToJson(_$ContractStateImpl instance) =>
       'currentStep': _$TransactionStepEnumMap[instance.currentStep]!,
       'escrowDeposited': instance.escrowDeposited,
       'deliveryConfirmed': instance.deliveryConfirmed,
+      'proofSubmitted': instance.proofSubmitted,
+      'proofText': instance.proofText,
+      'proofImagePath': instance.proofImagePath,
+      'aiProofAnalysis': instance.aiProofAnalysis,
+      'aiApprovedProof': instance.aiApprovedProof,
+      'proofSubmittedAt': instance.proofSubmittedAt?.toIso8601String(),
+      'buyerApprovedDelivery': instance.buyerApprovedDelivery,
     };
 
 const _$NegotiationStatusEnumMap = {
