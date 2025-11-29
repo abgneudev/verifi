@@ -108,7 +108,7 @@ class _ContractDraftSectionState extends ConsumerState<ContractDraftSection> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: VerifiTheme.voidBlack.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: VerifiTheme.glassBorder),
                 ),
                 child: contractState.currentDraft != null
@@ -220,7 +220,7 @@ class _ContractDraftSectionState extends ConsumerState<ContractDraftSection> {
                       ? VerifiTheme.voidBlack.withValues(alpha: 0.3)
                       : VerifiTheme.voidBlack.withValues(alpha: 0.1),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -379,7 +379,7 @@ class _ContractDraftSectionState extends ConsumerState<ContractDraftSection> {
                       ),
                       decoration: BoxDecoration(
                         color: VerifiTheme.ghostGrey.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'v${draft.version}',

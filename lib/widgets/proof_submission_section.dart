@@ -68,7 +68,7 @@ class _ProofSubmissionSectionState
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: VerifiTheme.electricPink.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.description,
@@ -135,7 +135,7 @@ class _ProofSubmissionSectionState
                   filled: true,
                   fillColor: VerifiTheme.voidBlack.withValues(alpha: 0.3),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -258,7 +258,7 @@ class AIConsensusWidget extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: VerifiTheme.hyperViolet.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: VerifiTheme.hyperViolet,
                         width: 2,

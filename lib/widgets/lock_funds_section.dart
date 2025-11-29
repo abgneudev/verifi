@@ -52,7 +52,7 @@ class LockFundsSection extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: VerifiTheme.voidBlack.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   contractState.currentDraft?.text ?? '',

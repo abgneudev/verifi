@@ -63,7 +63,7 @@ class FundsReleasedSection extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: VerifiTheme.voidBlack.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   children: [

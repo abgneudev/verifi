@@ -84,9 +84,9 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
     );
 
     final success = await nearbyService.startAdvertising(
-      userName: "Tourist",
+      userName: "Send",
       onConnectionInit: _onConnectionInit,
-      onConnectionResult: (id, status) => updateLog("Connection: $status"),
+      onConnectionResult: _onConnectionResult,
       onDisconnected: _onDisconnected,
     );
 
@@ -98,7 +98,7 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
 
   Future<void> startDiscovery() async {
     final nearbyService = ref.read(nearbyConnectionsServiceProvider);
-    updateLog("🔍 Searching for Tourist...");
+    updateLog("🔍 Searching for Send...");
 
     state = state.copyWith(
       status: conn.ConnectionStatus.discovering,
@@ -106,7 +106,7 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
     );
 
     final success = await nearbyService.startDiscovery(
-      userName: "Guide",
+      userName: "Receive",
       onEndpointFound: (id, name, serviceId) {
         updateLog("Found $name. Connecting...");
       },
@@ -114,7 +114,7 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
         updateLog("Lost connection to endpoint $id");
       },
       onConnectionInit: _onConnectionInit,
-      onConnectionResult: (id, status) => updateLog("Connection: $status"),
+      onConnectionResult: _onConnectionResult,
       onDisconnected: _onDisconnected,
     );
 
@@ -128,22 +128,33 @@ class ConnectionStateNotifier extends StateNotifier<conn.AppConnectionState> {
     final nearbyService = ref.read(nearbyConnectionsServiceProvider);
     updateLog("Connecting to ${info.endpointName}...");
 
+    // Accept the connection - but don't send messages yet!
     nearbyService.acceptConnection(id, _onPayloadReceived);
+  }
 
-    // Set up roles based on who is advertising (seller) vs discovering (buyer)
-    // The advertiser (Tourist) is the seller
-    if (state.isAdvertiser) {
-      ref
-          .read(contractStateProvider.notifier)
-          .initializeAsRole(UserRole.seller);
+  void _onConnectionResult(String id, Status status) {
+    if (status == Status.CONNECTED) {
+      updateLog("✅ Connected successfully!");
+
+      state = state.copyWith(
+        connectedEndpointId: id,
+        status: conn.ConnectionStatus.connected,
+      );
+
+      // Now that we're connected, set up roles and send initial message
+      if (state.isAdvertiser) {
+        ref
+            .read(contractStateProvider.notifier)
+            .initializeAsRole(UserRole.buyer);
+      } else {
+        ref
+            .read(contractStateProvider.notifier)
+            .initializeAsRole(UserRole.seller);
+      }
     } else {
-      ref.read(contractStateProvider.notifier).initializeAsRole(UserRole.buyer);
+      updateLog("❌ Connection failed: $status");
+      state = state.copyWith(status: conn.ConnectionStatus.disconnected);
     }
-
-    state = state.copyWith(
-      connectedEndpointId: id,
-      status: conn.ConnectionStatus.connected,
-    );
   }
 
   void _onDisconnected(String id) {

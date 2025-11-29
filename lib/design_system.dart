@@ -98,7 +98,7 @@ class VerifiTheme {
       cardTheme: CardThemeData(
         color: cardBackground,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: glassBorder, width: 1),
         ),
         elevation: 0,
@@ -112,9 +112,7 @@ class VerifiTheme {
           elevation: 0,
           shadowColor: hyperViolet.withValues(alpha: 0.5),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.manrope(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -128,15 +126,15 @@ class VerifiTheme {
         filled: true,
         fillColor: obsidianGlass.withValues(alpha: 0.5),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: glassBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: glassBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: hyperViolet, width: 2),
         ),
         hintStyle: GoogleFonts.inter(color: ghostGrey),
@@ -200,7 +198,7 @@ class GlassCard extends StatelessWidget {
                 Colors.white.withValues(alpha: 0.01),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: VerifiTheme.glassBorder, width: 1),
         boxShadow: [
           BoxShadow(
@@ -212,7 +210,7 @@ class GlassCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: child,
@@ -231,6 +229,7 @@ class NeoPopButton extends StatelessWidget {
   final String text;
   final IconData? icon;
   final Color? color;
+  final Color? foregroundColor;
   final bool isLoading;
 
   const NeoPopButton({
@@ -239,19 +238,21 @@ class NeoPopButton extends StatelessWidget {
     required this.text,
     this.icon,
     this.color,
+    this.foregroundColor,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final buttonColor = color ?? VerifiTheme.hyperViolet;
+    final textColor = foregroundColor ?? Colors.white;
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: buttonColor.withValues(alpha: 0.5),
+            color: buttonColor.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -266,35 +267,40 @@ class NeoPopButton extends StatelessWidget {
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+          foregroundColor: textColor,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(40),
           ),
           elevation: 0,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(textColor),
                 ),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20),
+                    Icon(icon, size: 16, color: textColor),
                     const SizedBox(width: 8),
                   ],
-                  Text(
-                    text.toUpperCase(),
-                    style: GoogleFonts.manrope(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                  Flexible(
+                    child: Text(
+                      text.toUpperCase(),
+                      style: GoogleFonts.manrope(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: textColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -326,7 +332,7 @@ class StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(

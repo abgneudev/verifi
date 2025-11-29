@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'design_system.dart';
-import 'widgets/connection_buttons.dart';
-import 'widgets/contract_draft_section.dart';
-import 'widgets/funds_released_section.dart';
-import 'widgets/lock_funds_section.dart';
-import 'widgets/proof_submission_section.dart';
 import 'widgets/status_monitor.dart';
+import 'widgets/balance_card.dart';
+import 'widgets/info_tiles.dart';
+import 'widgets/statement_summary.dart';
+import 'widgets/connection_buttons.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -39,6 +38,7 @@ class EscrowScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -46,24 +46,22 @@ class EscrowScreen extends ConsumerWidget {
             colors: [VerifiTheme.voidBlack, VerifiTheme.voidBlackLight],
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: const [
-                  StatusMonitor(),
-                  ConnectionButtons(),
-                  SizedBox(height: 20),
-                  ContractDraftSection(),
-                  LockFundsSection(),
-                  ProofSubmissionSection(),
-                  FundsReleasedSection(),
-                  SizedBox(height: 40),
-                ],
-              ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 100.0, 20.0, 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const StatusMonitor(),
+                const SizedBox(height: 20),
+                const BalanceCard(),
+                const InfoTiles(),
+                const StatementSummary(),
+                const SizedBox(height: 20),
+                const ConnectionButtons(),
+                const SizedBox(height: 40),
+              ],
             ),
           ),
         ),

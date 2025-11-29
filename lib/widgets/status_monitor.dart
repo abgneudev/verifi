@@ -11,51 +11,35 @@ class StatusMonitor extends ConsumerWidget {
     final connectionState = ref.watch(connectionStateProvider);
     final cactusService = ref.watch(cactusAIServiceProvider);
 
-    return GlassCard(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: cactusService.isReady
-                      ? VerifiTheme.neonMint
-                      : VerifiTheme.signalOrange,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (cactusService.isReady
-                                  ? VerifiTheme.neonMint
-                                  : VerifiTheme.signalOrange)
-                              .withValues(alpha: 0.5),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
+    return Center(
+      child: GlassCard(
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: VerifiTheme.neonMint,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: VerifiTheme.neonMint.withAlpha(40),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Text(
-                'SYSTEM STATUS',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            connectionState.logText,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: 'monospace',
-              height: 1.5,
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              'READY TO CONNECT',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ],
+        ),
       ),
     );
   }
